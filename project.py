@@ -1,3 +1,5 @@
+# Import all necessary libraries
+
 import pandas as pd
 import os
 import random
@@ -241,7 +243,7 @@ if 'Assigned_To' not in df.columns:
 
 # --- Streamlit UI ---
 st.sidebar.image("Bank.png", width=150)
-st.title("📊 Customer Interaction Insight Copilot")
+st.title("Customer Interaction Insight Copilot")
 
 sentiment_filter = st.selectbox("Filter by Sentiment", ["All"] + sentiments)
 channel_filter = st.selectbox("Select Channel", ["All"] + sorted(df["Channel"].unique()))
@@ -259,7 +261,7 @@ with tab1:
     st.write(f"Showing {len(filtered_df)} feedback entries.")
     st.dataframe(filtered_df[["Timestamp", "Channel", "Product", "Feedback", "Sentiment", "Assigned_To"]].reset_index(drop=True))
 
-    st.subheader("📊 Sentiment Distribution")
+    st.subheader("Sentiment Distribution")
     sentiment_counts = filtered_df["Sentiment"].value_counts()
     fig, ax = plt.subplots()
     sentiment_counts.plot(kind='bar', color=['green', 'red', 'gray'], ax=ax)
@@ -316,12 +318,13 @@ if 'Segment' not in filtered_df.columns:
     filtered_df['Segment'] = filtered_df['Feedback'].apply(get_segment)
 
 with tab3:
-    st.subheader("👥 Role-Based Routing Overview")
+    st.markdown("<h3 style='color:#1f77b4;'>Role-Based Routing Overview</h3>", unsafe_allow_html=True)
     st.write("Each feedback entry is automatically assigned to a relevant role based on its content.")
 
     role_counts = filtered_df["Assigned_To"].value_counts()
     st.bar_chart(role_counts)
 
+    st.markdown("<h4 style='color:green; font-weight:bold;'>Following action items generated for negative feedbacks:</h4>", unsafe_allow_html=True)
     for role in role_counts.index:
         role_df = filtered_df[filtered_df["Assigned_To"] == role].copy()
 
