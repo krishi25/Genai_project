@@ -34,7 +34,7 @@ try:
         "text-classification",
         model="twitter-roberta-base-offensive",
         tokenizer="twitter-roberta-base-offensive",
-        top_k=None
+        top_k=None 
     )
     logging.info("Toxicity classifier loaded successfully.")
 except Exception as e:
@@ -90,7 +90,7 @@ products = ['Savings Account', 'Credit Card', 'Personal Loan', 'Home Loan',
             'Mobile Banking', 'Checking Account', 'Auto Loan', 'Mortgage']
 sentiments = ['Positive', 'Negative', 'Neutral']
 
-# ------------------- Helper Functions ------------------- #
+# Get segment based on keywords in feedback
 def get_segment(feedback):
     try:
         keywords = ["app", "loan", "support", "rate", "approval", "interface", "crash",
@@ -104,6 +104,7 @@ def get_segment(feedback):
         logging.error(f"Error in get_segment: {e}")
         return "other"
 
+# Assign role based on keywords in feedback
 def assign_role(feedback):
     try:
         feedback_lower = feedback.lower()
@@ -126,6 +127,7 @@ def assign_role(feedback):
         logging.error(f"Error in assign_role: {e}")
         return "Support Team"
 
+# Assign action item based on feedback and role
 def assign_action_item(feedback, role, segment=None):
     try:
         feedback_lower = feedback.lower()
@@ -172,6 +174,8 @@ def assign_action_item(feedback, role, segment=None):
         logging.error(f"Error in assign_action_item: {e}")
         return "Error assigning action", "Low"
 
+# Check if text is toxic using the toxicity classifier
+
 def is_toxic_text(text, threshold=0.5):
     if toxicity_classifier is None:
         logging.warning("Toxicity classifier unavailable.")
@@ -184,13 +188,14 @@ def is_toxic_text(text, threshold=0.5):
         logging.error(f"Error in is_toxic_text: {e}")
         return False
 
+# Filter toxic comments from a list of comments
 def filter_toxic_feedback(comments):
     if toxicity_classifier is None:
         return comments, []
     non_toxic, toxic = [], []
     for comment in comments:
         try:
-            preds = toxicity_classifier(comment)[0]
+            preds = toxicity_classifier(comment)
             labels = [p['label'] for p in preds if p['score'] > 0.5]
             if "OFFENSIVE" in labels:
                 toxic.append(comment)
@@ -201,6 +206,7 @@ def filter_toxic_feedback(comments):
             non_toxic.append(comment)
     return non_toxic, toxic
 
+# Summarize complaints using OpenAI API
 def summarize_complaints(comment_list):
     if not openai.api_key:
         return "OpenAI API key not configured."
@@ -280,8 +286,7 @@ try:
     if channel_filter != "All":
         filtered_df = filtered_df[filtered_df["Channel"] == channel_filter]
 
-    tab1, tab2, tab3 = st.tabs(["📋 View Feedback Data", "🧠 AI-Powered Summary", "👥 Role-Based Routing"])
-
+    tab1, tab2, tab3 = st.tabs(["📋 View Feedback Data", "🧠 AI-Powered Summary", "👥 Role-Based Overview"])
     # --- Tab 1 ---
     with tab1:
         st.write(f"Showing {len(filtered_df)} feedback entries.")
@@ -290,7 +295,7 @@ try:
             st.subheader("Sentiment Distribution")
             sentiment_counts = filtered_df["Sentiment"].value_counts()
             fig, ax = plt.subplots()
-            sentiment_counts.plot(kind='bar', color=['green', 'red', 'gray'], ax=ax)
+            sentiment_counts.plot(kind='bar', ax=ax)
             st.pyplot(fig)
         except Exception as e:
             st.error(f"Error plotting sentiment chart: {e}")
@@ -334,11 +339,11 @@ try:
         filtered_df['Segment'] = filtered_df['Feedback'].apply(get_segment)
 
     with tab3:
-        st.markdown("<h3 style='color:#1f77b4;'>Role-Based Routing Overview</h3>", unsafe_allow_html=True)
+        st.markdown("<h3 style='color:#1f77b4;'>Role-Based Overview</h3>", unsafe_allow_html=True)
         
         role_counts = filtered_df["Assigned_To"].value_counts()
         st.bar_chart(role_counts)
-        st.markdown("<h4 style='color:green; font-weight:bold;'>Following action items generated for negative feedbacks:</h4>", unsafe_allow_html=True)
+        st.markdown("<h4 style='color:green; font-weight:bold;'>Following action items generated for actionable feedbacks:</h4>", unsafe_allow_html=True)
 
         for role in role_counts.index:
             role_df = filtered_df[filtered_df["Assigned_To"] == role].copy()
@@ -389,4 +394,4 @@ try:
 
 except Exception as e:
     logging.critical(f"Fatal UI error: {e}")
-    st.error(f"🚨 A critical error occurred: {e}")
+    st.error(f"A critical error occurred: {e}")
